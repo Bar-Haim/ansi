@@ -1,10 +1,6 @@
 pipeline {
   agent any
 
-  environment {
-    // כאן תכניסי את ה־ID של ה־Credentials אם תצטרכי גישה לפרטי SSH או Git private
-  }
-
   stages {
     stage('Clone Repo') {
       steps {
