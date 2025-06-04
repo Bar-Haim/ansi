@@ -1,17 +1,18 @@
 ---
 - name: Install Docker and Run Image
-  hosts: machines
-  become: true
+  hosts: all
+  become: yes
 
   vars:
-    docker_image_sha: "sha256:367a6ee6048d4187fbaef258a528b64781e909819e65dc86c2834d92ff9b7db3"
-    docker_image_name: "barhaim10/the-last-jenkins-exercise"
-    container_name: "jenkins-demo-container"
+    docker_image_name: barhaim10/the-last-jenkins-exercise
+    docker_image_sha: sha256:367a6ee6048d4187fbaef258a528b64781e909819e65dc86c2834d92ff9b7db3
+    container_name: jenkins-demo-container
 
   tasks:
     - name: Update apt cache
       apt:
         update_cache: yes
+        cache_valid_time: 3600
 
     - name: Install dependencies
       apt:
@@ -19,8 +20,7 @@
           - apt-transport-https
           - ca-certificates
           - curl
-          - gnupg
-          - lsb-release
+          - software-properties-common
         state: present
 
     - name: Add Docker GPG key
@@ -30,24 +30,25 @@
 
     - name: Add Docker repository
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
         state: present
-        filename: docker
 
     - name: Install Docker
       apt:
         name: docker-ce
         state: latest
-        update_cache: yes
 
     - name: Ensure Docker is running
       service:
         name: docker
         state: started
-        enabled: true
+        enabled: yes
 
     - name: Pull image by digest
-      command: docker pull {{ docker_image_name }}@{{ docker_image_sha }}
+      shell: docker pull {{ docker_image_name }}@{{ docker_image_sha }}
+
+    - name: Remove existing container if it exists
+      shell: docker rm -f {{ container_name }} || true
 
     - name: Run container from image with python app.py
-      command: docker run -d --name {{ container_name }} {{ docker_image_name }}@{{ docker_image_sha }} python app.py
+      shell: docker run -d --name {{ container_name }} {{ docker_image_name }}@{{ docker_image_sha }} python app.py
